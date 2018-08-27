@@ -20,10 +20,29 @@
   (let [docs (concat (:arachne/doc entity)
                (:rdfs/comment entity))]
     (when-not (empty? docs)
-      (fmt/cfprint ansi/cyan "DOCUMENTATION:\n\n")
+      (fmt/cfprint ansi/cyan "Documentation:\n\n")
       (->> docs (map str/trim) (str/join "\n\n") (println))
       (print "\n")
       )))
+
+(def properties-q
+  '[:conditional
+    [:minus
+     [:minus
+      [:bgp [?property :rdfs/domain ?domain]
+            [?property :rdfs/range ?range]]
+      [:filter (not= ?range ?subrange)
+       [:bgp [?property :rdfs/range ?range]
+             [?subrange :rdfs/subClassOf ?range]]]]
+     [:filter (not= ?domain ?subdomain)
+      [:bgp [?property :rdfs/domain ?subdomain]
+            [?subdomain :rdfs/subClassOf ?domain]]]]
+    [:conditional
+     [:bgp [?domain :rdfs/subClassOf ?restriction]
+           [?restriction :owl/onProperty ?property]]
+     [:disjunction [:bgp [?restriction :owl/cardinality ?card]]
+      [:union [:bgp [?restriction :owl/minCardinality ?min-card]]
+              [:bgp [?restriction :owl/maxCardinality ?max-card]]]]]])
 
 (defn- get-properties
   "Given a class, return a map of the properties with that class as the
@@ -32,25 +51,7 @@
   Also returns the range and cardinality of the property. The range returned is
   the declared range (i.e not including superclasses.)"
   [d class]
-  (let [results (d/query d
-                  '[:conditional
-                    [:minus
-                     [:minus
-                      [:bgp [?property :rdfs/domain ?class]
-                            [?property :rdfs/range ?range]]
-                      [:filter (not= ?range ?subrange)
-                       [:bgp [?property :rdfs/range ?range]
-                             [?subrange :rdfs/subClassOf ?range]]]]
-                     [:filter (not= ?class ?domain)
-                      [:bgp [?property :rdfs/domain ?domain]
-                            [?domain :rdfs/subClassOf ?class]]]]
-                    [:conditional
-                     [:bgp [?class :rdfs/subClassOf ?restriction]
-                           [?restriction :owl/onProperty ?property]]
-                     [:disjunction [:bgp [?restriction :owl/cardinality ?card]]
-                      [:union [:bgp [?restriction :owl/minCardinality ?min-card]]
-                       [:bgp [?restriction :owl/maxCardinality ?max-card]]]]]]
-                  {'?class class})]
+  (let [results (d/query d properties-q {'?domain class})]
     (sort-by #(get % "Property")
       (for [result results]
         {"Property" (get result '?property)
@@ -58,6 +59,21 @@
          "Max" (or (get result '?card) (get result '?max-card) "")
          "Range" (get result '?range)
          "Domain" class}))))
+
+(defn- get-property-classes
+  "Given a property, return a map of the classes to which it can be
+  applied (as direct declared domains, not including superclasses.)
+
+  Also returns the range and cardinality of the property for each class. The range returned is
+  the declared range (i.e not including superclasses.)"
+  [d property]
+  (let [results (d/query d properties-q {'?property property})]
+    (sort-by #(get % "Class")
+      (for [result results]
+        {"Domain" (get result '?domain)
+         "Range" (get result '?range)
+         "Min" (or (get result '?card) (get result '?min-card) "")
+         "Max" (or (get result '?card) (get result '?max-card) "")}))))
 
 (def directSubClassOf (str "<" ReasonerVocabulary/directSubClassOf ">"))
 
@@ -127,21 +143,18 @@
         (fmt/cfprint ansi/cyan "Subclass Of: ")
         (println (str/join ", " superclasses) "\n"))
       (when-not (empty? props)
-        (fmt/cfprint ansi/cyan "Associated Properties:\n")
+        (fmt/cfprint ansi/cyan "Domain Of:\n")
         (print-table props))
-      (print "\n")
+      (print "\n"))))
 
-      )
-
-    #_(when-let [ancestors (:rdfs/subClassOf entity)]
-      (fmt/cfprint ansi/cyan "Properties in Domain: n")
-      (print (str/join "," ancestors))
-      (print "\n")
-
-      )
-
-    )
-  )
+(defn- print-prop
+  [d entity]
+  (when (:rdf/Property (:rdf/type entity))
+    (let [classes (get-property-classes d (:rdf/about entity))]
+      (when-not (empty? classes)
+    (fmt/cfprint ansi/cyan "Declared Domains:\n")
+        (print-table classes)))
+     (print "\n")))
 
 (defn- print-header
   [d entity]
@@ -170,7 +183,7 @@
         entity (d/pull d iri '[*])]
     (binding [fmt/*color* (:color opts)]
       (print-header d entity)
-      (print-docs entity)
-      ;; (print-prop d entity)
       (print-class d entity)
+      (print-prop d entity)
+      (print-docs entity)
       (print "\n\n"))))

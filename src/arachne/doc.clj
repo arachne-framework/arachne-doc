@@ -54,6 +54,15 @@
                                    :test/foo 32
                                    :arachne.component/constructor 'foo/quiz}}
 
+     {:rdf/about :test/claws
+      :rdfs/range [:xsd/string :test/ClawType]
+      :rdfs/domain [:test/Reptile :test/Mammal]}
+
+     {:rdf/about :test/Mammal
+      :rdfs/subClassOf {:rdf/type :owl/Restriction
+                        :owl/onProperty :test/claws
+                        :owl/minCardinality 4}}
+
      #arachne/class [:test/Animal []
                      "An animal"
                      :test.animal/species :one :required :xsd/string "species"]
@@ -80,6 +89,7 @@
   (doc d :org.arachne-framework/arachne-doc)
   (doc d :org.arachne-framework/arachne-doc)
 
+  (doc d :arachne/doc)
   (doc d :arachne.component/constructor)
 
   (doc d :arachne/Component)
@@ -89,6 +99,8 @@
   (doc d :test/Animal)
   (doc d :test/Reptile)
   (doc d :test/Snake)
+
+  (doc d :test/claws)
 
 
   (import '[org.apache.jena.vocabulary ReasonerVocabulary])
