@@ -3,10 +3,23 @@
             [arachne.error.format :as fmt]
             [arachne.doc.data :as data]
             [arachne.core.descriptor :as d]
+            [arachne.aristotle.graph :as graph]
             [arachne.error :as err]
             [io.aviso.ansi :as ansi]
             [clojure.string :as str])
   (:import [org.apache.jena.vocabulary ReasonerVocabulary]))
+
+(def ^:private link-re #"<\?link(.*?)\?>")
+
+(defn- replace-links
+  "Replace `link` processing instructions with formated text."
+  [text]
+  (str/replace text link-re (fn [[_ match]]
+                              (let [iri (str/trim match)
+                                    node (graph/node (if (= \: (first iri))
+                                                       (read-string iri)
+                                                       (str "<" iri ">")))]
+                                (ansi/yellow (str (graph/data node)))))))
 
 (defn- print-docs
   "Format the :arachne/doc on an entity for output to the REPL"
@@ -15,7 +28,7 @@
                (:rdfs/comment entity))]
     (when-not (empty? docs)
       (fmt/cfprint ansi/cyan "Documentation:\n\n")
-      (->> docs (map str/trim) (str/join "\n\n") (println))
+      (->> docs (map str/trim) (str/join "\n\n") (replace-links) (println))
       (print "\n"))))
 
 (defn- print-table

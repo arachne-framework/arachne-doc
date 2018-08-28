@@ -90,3 +90,23 @@
                   (apply merge {c supers} (map build supers))))
         graph (loom/digraph (build class))]
     (filter #(not= class %) (loom-alg/topsort graph))))
+
+(defn find-undocumented
+  "Return all undocumented classes, properties and modules that were
+  installed by Arachne. Return value is a map of the IRI to the
+  transaction index that installed it."
+  [d]
+  (into {}
+    (d/query d '[?obj ?idx]
+      '[:filter (not-exists [:bgp [?obj :arachne/doc _]])
+        [:filter (not (isBlank ?obj))
+         [:join
+          [:union
+           [:union
+            [:bgp [?obj :rdf/type :rdf/Property]]
+            [:bgp [?obj :rdf/type :rdfs/Class]]]
+           [:bgp [?obj :rdf/type :arachne/Module]]]
+          [:bgp
+           [?stmt :rdf/subject ?obj]
+           [?stmt :arachne.descriptor/tx ?tx]
+           [?tx :arachne.descriptor.tx/index ?idx]]]]])))

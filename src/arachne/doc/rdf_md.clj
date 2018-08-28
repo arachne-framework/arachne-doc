@@ -2,6 +2,7 @@
   "Reader/writer for RDF/MD"
   (:require [arachne.aristotle.graph :as g]
             [clojure.string :as str]
+            [arachne.aristotle.graph :as graph]
             [arachne.aristotle.registry :as reg])
   (:import [org.apache.jena.riot LangBuilder RDFParserRegistry ReaderRIOTFactory ReaderRIOT]
            [org.apache.jena.riot.system ParserProfile StreamRDF]
@@ -20,7 +21,7 @@
 (def ^:private prefix-re #"(?s)<\?prefix(.*?)=(.*?)\?>")
 (def ^:private global-prefix-re #"(?s)<\?global\-prefix(.*?)=(.*?)\?>")
 
-(defn- parse-iri
+(defn parse-iri
   "IRIs can be bare keywords or a string IRI"
   [iri]
   (let [iri (str/trim iri)]

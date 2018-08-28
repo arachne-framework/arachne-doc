@@ -118,3 +118,23 @@
            {"Domain" :test/Reptile, "Range" :test/ClawType, "Min" "", "Max" ""}
            {"Domain" :test/Mammal, "Range" :xsd/string, "Min" 4, "Max" ""}
            {"Domain" :test/Mammal, "Range" :test/ClawType, "Min" 4, "Max" ""}]))))
+
+(comment
+  (def d (a/descriptor :org.arachne-framework/arachne-doc))
+
+  (doc/doc d :org.arachne-framework/arachne-doc)
+  (doc/doc d :arachne/doc)
+
+  (clojure.pprint/pprint
+    (data/find-undocumented d))
+
+  (d/pull d '_46657f62-21af-4bc3-bff0-de9edf774b30 '[*])
+
+  (d/pull d '_aa550241-afe6-4b28-981a-ff79ef673f82 '[*])
+
+  (d/query d '[?e ?a]
+    '[:bgp
+      [?e ?a ?prov]]
+    {'?prov '_a5d47822-b5ef-4977-aa3a-7772a60e5bde})
+
+  )
