@@ -124,9 +124,13 @@
 
   (doc/doc d :org.arachne-framework/arachne-doc)
   (doc/doc d :arachne/doc)
+  (doc/doc d :clojure/Var)
+
 
   (clojure.pprint/pprint
     (data/find-undocumented d))
+
+  (d/query d '[:bgp [?v :rdf/type :clojure/Namespace]])
 
   (d/pull d '_46657f62-21af-4bc3-bff0-de9edf774b30 '[*])
 

@@ -2,12 +2,12 @@
   "Reader/writer for RDF/MD"
   (:require [arachne.aristotle.graph :as g]
             [clojure.string :as str]
-            [arachne.aristotle.graph :as graph]
             [arachne.aristotle.registry :as reg])
   (:import [org.apache.jena.riot LangBuilder RDFParserRegistry ReaderRIOTFactory ReaderRIOT]
            [org.apache.jena.riot.system ParserProfile StreamRDF]
            [org.apache.jena.atlas.web ContentType]
            [org.apache.jena.sparql.util Context]
+           [org.apache.jena.graph Node]
            [java.io InputStream Reader InputStreamReader]))
 
 (def lang (-> (LangBuilder/create)
@@ -17,11 +17,13 @@
               (.addFileExtensions (into-array String ["md"]))
               (.build)))
 
-(def ^:private about-re #"(?s)<\?about(.*?)\?>")
-(def ^:private prefix-re #"(?s)<\?prefix(.*?)=(.*?)\?>")
-(def ^:private global-prefix-re #"(?s)<\?global\-prefix(.*?)=(.*?)\?>")
+(def about-re #"(?s)<\?about(.*?)\?>")
+(def prefix-re #"(?s)<\?prefix(.*?)=(.*?)\?>")
+(def global-prefix-re #"(?s)<\?global\-prefix(.*?)=(.*?)\?>")
+(def link-re #"<\?link(.*?)\?>")
+(def ref-re #"<\?ref(.*?)\?>")
 
-(defn parse-iri
+(defn- parse-iri
   "IRIs can be bare keywords or a string IRI"
   [iri]
   (let [iri (str/trim iri)]
@@ -56,21 +58,41 @@
               iri])))
     (map reg/read-global-prefix)))
 
+(defn- resolve-refs
+  "Given a string, replace IRIs in `ref` processing instructions with
+  their canonical string form."
+  [s]
+  (str/replace s ref-re
+    (fn [[_ iri]]
+      (str "<?ref " (.getURI (g/node (parse-iri iri))) " ?>"))))
+
+(defn- resolve-links
+  "Given a string, replace IRIs in `link` processing instructions with
+  their canonical string form."
+  [s]
+  (str/replace s link-re
+    (fn [[_ iri]]
+      (str "<?link " (.getURI (g/node (parse-iri iri))) " ?>"))))
+
 (defn- read-md
   "Read Markdown from an input stream or Reader into the given StreamRDF output object"
   [input ^StreamRDF output]
   (let [s (slurp input)
         prefixes (extract-prefixes s)
-        global-prefixes (extract-global-prefixes s)
-        topics (map second (re-seq about-re s))
-        sections (drop 1 (str/split s about-re))
-        data (map (fn [topic section]
-                    {:rdf/about (parse-iri topic)
-                     :arachne/doc section})
-               topics sections)
-        data (vec (concat global-prefixes prefixes data))]
-    (doseq [t (g/triples data)]
-      (.triple output t))
+        global-prefixes (extract-global-prefixes s)]
+    (reg/with {}
+      (doseq [prefix (concat global-prefixes prefixes)]
+        (reg/install-prefix prefix))
+      (let [s (resolve-links s)
+            s (resolve-iris s)
+            topics (map second (re-seq about-re s))
+            sections (drop 1 (str/split s about-re))
+            data (map (fn [topic section]
+                        {:rdf/about (parse-iri topic)
+                         :arachne/doc section})
+                   topics sections)]
+        (doseq [t (g/triples data)]
+          (.triple output t))))
     (.finish output)))
 
 (defn- riot-reader

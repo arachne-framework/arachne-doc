@@ -1,5 +1,5 @@
 {:paths ["src" "resources" "doc"]
- :deps {org.clojure/clojure {:mvn/version "1.10.0-alpha2"}
+ :deps {org.clojure/clojure {:mvn/version "1.10.0-alpha4"}
         org.arachne-framework/arachne-core {:local/root "../arachne-core"}}
  :aliases
  {:run-tests {:main-opts ["-m" "arachne.error.test-runner"]}

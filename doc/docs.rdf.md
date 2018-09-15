@@ -2,7 +2,7 @@
 tests -->
 
 <?prefix :arachne.core=http://arachne-framework.org/name/ ?>
-<?prefix :a=urn:arachne:?>
+<?prefix :a=urn:arachne: ?>
 
 <?about :arachne.core/arachne-doc ?>
 
@@ -10,7 +10,7 @@ This module provides built-in documentation support for Arachne. When
 the module is included in a project, it will scan the classpath for
 any files named `*.rdf.edn`, and parse them into markdown
 snippets. These snippets will then included as RDF in the project's
-descriptor under the <?link urn:arachne:doc ?> attribute.
+descriptor under the [<?ref urn:arachne:doc>](<?link urn:arachne:doc ?>) attribute.
 
 Markdown snippets are written in Pandoc-flavored-markdown, allowing
 rendering into nearly any documentation format.
@@ -28,13 +28,13 @@ particular RDF Subject, up until the end of the file or the next
 
 For example,
 
-&lt;?about :some/subject ?&rt;
+?&lt;?about :some/subject ?&rt;
 
 ### `prefix`
 
 Installs a keyword namespace as an IRI namespace prefix (see
 [Aristotle's Documentation](https://github.com/arachne-framework/aristotle#irikeyword-registry)
-for a discussion of how namespace IRI prefixes work.
+for a discussion of how namespace IRI prefixes work.)
 
 The prefix is scoped to the parsing of this RDF file only.
 
@@ -46,20 +46,18 @@ This will indicate that the keyword namespace `:a` will be registered
 to the IRI prefix `urn:arachne:` within the scope of this Markdown
 file.
 
+### `link`
+
+Resolves an IRI (using any registered prefixes) and indicates that
+renderers should replace the processing instruction with a
+absolute/relative link to the documentation for the indicated subject.
+
 ### `ref`
 
-Resolves an IRI (using any registered prefixes) and replaces it with a
-`link` processing instruction, with a fully expanded formal IRI.
-
-For example, given the prefix registration described above,
-
-&lt;?ref :a/doc ?&rt;
-
-will become
-
-&lt;?link urn:arachne:doc ?&rt;
-
-This allows namespace prefixes to be used when writing documentation.
+Resolves an IRI (using any registered prefixes) and indicates that
+renderers should replace the processing instruction with the most
+appropriately formatted IRI, at rendering time (i.e, using whatever
+prefixes are defined at the time of rendering.)
 
 <?about :a/doc ?>
 
