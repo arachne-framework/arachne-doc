@@ -35,8 +35,6 @@
   (doseq [doc-file (doc-files)]
     (d/add-file! d doc-file)))
 
-(def ^{:doc "Print the documentation for a given resource in the descriptor. Options are:
-
-   :color - print using ANSI colors (default true)"}
+(def ^{:doc "Print the documentation for a given resource in the descriptor."}
   doc repl/describe)
 

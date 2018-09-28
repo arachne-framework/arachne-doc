@@ -122,13 +122,18 @@
 (comment
   (def d (a/descriptor :org.arachne-framework/arachne-doc))
 
-  (doc/doc d :org.arachne-framework/arachne-doc)
+  (alter-var-root #'arachne.repl/*color* (constantly true))
+  (binding [arachne.repl/*color* false]
+    (doc/doc d :org.arachne-framework/arachne-doc))
+
+
+  (doc/doc d :org.arachne-framework/arachne-core)
   (doc/doc d :arachne/doc)
   (doc/doc d :clojure/Var)
 
-
   (clojure.pprint/pprint
-    (data/find-undocumented d))
+    (sort (keys
+            (data/find-undocumented d))))
 
   (d/query d '[:bgp [?v :rdf/type :clojure/Namespace]])
 

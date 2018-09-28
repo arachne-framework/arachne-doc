@@ -1,25 +1,30 @@
 (ns arachne.doc.format.repl
   (:require [arachne.core :as a]
-            [arachne.error.format :as fmt]
+            [arachne.repl :as fmt]
             [arachne.doc.data :as data]
             [arachne.core.descriptor :as d]
             [arachne.aristotle.graph :as graph]
             [arachne.error :as err]
             [io.aviso.ansi :as ansi]
             [clojure.string :as str])
-  (:import [org.apache.jena.vocabulary ReasonerVocabulary]))
+  (:import [org.apache.jena.vocabulary ReasonerVocabulary]
+           [org.apache.commons.lang3 StringEscapeUtils]))
 
-(def ^:private link-re #"<\?link(.*?)\?>")
+(def ^:private link-ref-re #"<\?(ref|link)(.+?)\?>")
 
 (defn- replace-links
   "Replace `link` processing instructions with formated text."
   [text]
-  (str/replace text link-re (fn [[_ match]]
-                              (let [iri (str/trim match)
-                                    node (graph/node (if (= \: (first iri))
-                                                       (read-string iri)
-                                                       (str "<" iri ">")))]
-                                (ansi/yellow (str (graph/data node)))))))
+  (str/replace text link-ref-re
+    (fn [[_ type match]]
+      (let [iri (str/trim match)
+            node (graph/node (if (= \: (first iri))
+                               (read-string iri)
+                               (str "<" iri ">")))]
+
+        (if (= "link" type)
+          (fmt/cfstr ansi/bold-yellow (str (graph/data node)))
+          (str (graph/data node)))))))
 
 (defn- print-docs
   "Format the :arachne/doc on an entity for output to the REPL"
@@ -28,7 +33,13 @@
                (:rdfs/comment entity))]
     (when-not (empty? docs)
       (fmt/cfprint ansi/cyan "Documentation:\n\n")
-      (->> docs (map str/trim) (str/join "\n\n") (replace-links) (println))
+      (->> docs
+        (map str/trim)
+        (str/join "\n\n")
+        (replace-links)
+        (StringEscapeUtils/unescapeXml)
+        (fmt/colorize)
+        (println))
       (print "\n"))))
 
 (defn- print-table
@@ -53,7 +64,7 @@
          (println (fmt-row "|-" "-+-" "-|" (zipmap ks spacers)))
          (doseq [row rows]
            (println (fmt-row "| " " | " " |" row))))))
-([rows] (print-table (keys (first rows)) rows)))
+  ([rows] (print-table (keys (first rows)) rows)))
 
 
 (defn- print-class
@@ -93,21 +104,12 @@
     (fmt/cfprint ansi/cyan (apply str (repeat len "-")) "\n")
     (print "\n")))
 
-(def ^{:dynamic true
-       :doc "Default options for doc formatting"}
-   *default-doc-opts*
-  {:color true})
-
 (defn describe
-  "Print the documentation for a given resource in the descriptor. Options are:
-
-   :color - print using ANSI colors (default true)"
+  "Print the documentation for a given resource in the descriptor."
   [d iri & {:as opts}]
-  (let [opts (merge *default-doc-opts* opts)
-        entity (d/pull d iri '[*])]
-    (binding [fmt/*color* (:color opts)]
-      (print-header d entity)
-      (print-class d entity)
-      (print-prop d entity)
-      (print-docs entity)
-      (print "\n\n"))))
+  (let [entity (d/pull d iri '[*])]
+    (print-header d entity)
+    (print-class d entity)
+    (print-prop d entity)
+    (print-docs entity)
+    (print "\n\n")))

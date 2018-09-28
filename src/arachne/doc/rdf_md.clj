@@ -84,7 +84,7 @@
       (doseq [prefix (concat global-prefixes prefixes)]
         (reg/install-prefix prefix))
       (let [s (resolve-links s)
-            s (resolve-iris s)
+            s (resolve-refs s)
             topics (map second (re-seq about-re s))
             sections (drop 1 (str/split s about-re))
             data (map (fn [topic section]
