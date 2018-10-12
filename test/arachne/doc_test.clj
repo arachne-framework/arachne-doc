@@ -38,20 +38,16 @@
                       :owl/minCardinality 4}}
 
    #arachne/class [:test/Animal []
-                   "An animal"
-                   :test.animal/species :one :required :xsd/string "species"]
+                   {:test.animal/species [:one :required :xsd/string]}]
 
    #arachne/class [:test/Mammal [:test/Animal]
-                   "A mamal"
-                   :test.mammal/fur-type :one :required :test/FurType "The type of fur of the animal"]
+                   {:test.mammal/fur-type [:one :required :test/FurType]}]
 
    #arachne/class [:test/Reptile [:test/Animal]
-                   "A reptile"
-                   :test.reptile/scale-type :one :required :test/ScaleType "The type of scale of the animal"]
+                   {:test.reptile/scale-type [:one :required :test/ScaleType]}]
 
    #arachne/class [:test/Snake [:test/Reptile]
-                   "A reptile"
-                   :test.snake/venomous :one :required :xsd/boolean "poisonous?"]])
+                   {:test.snake/venomous [:one :required :xsd/boolean]}]])
 
 (deftest test-get-properties
   (let [d (a/descriptor :org.arachne-framework/arachne-doc test-data)]
@@ -122,14 +118,18 @@
 (comment
   (def d (a/descriptor :org.arachne-framework/arachne-doc))
 
-  (alter-var-root #'arachne.repl/*color* (constantly true))
-  (binding [arachne.repl/*color* false]
-    (doc/doc d :org.arachne-framework/arachne-doc))
-
+  (doc/doc d :org.arachne-framework/arachne-doc)
 
   (doc/doc d :org.arachne-framework/arachne-core)
-  (doc/doc d :arachne/doc)
-  (doc/doc d :clojure/Var)
+  (doc/doc d :arachne/Module)
+
+
+  (doc/doc d :arachne.doc.topic/bootstrap)
+  (doc/doc d :arachne.component.dependency/key)
+
+  (doc/doc d :arachne/Provenance)
+
+  (doc/doc d :arachne.descriptor/Validator)
 
   (clojure.pprint/pprint
     (sort (keys
