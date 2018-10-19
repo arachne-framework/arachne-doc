@@ -118,6 +118,35 @@
 (comment
   (def d (a/descriptor :org.arachne-framework/arachne-doc))
 
+  (d/query d '[:bgp [?t :arachne.descriptor/tx ?tx]])
+
+
+
+  (clojure.pprint/pprint
+    (d/query d
+      '[:bgp
+        [?p :arachne.provenance/rdf-file ?f]
+
+        ]))
+
+  (def p
+    (-> (d/query d
+          '[:bgp
+            [?t :rdf/subject :arachne.module/include]
+            [?t :rdf/predicate :arachne/doc]
+            [?t :rdf/object ?d]
+            [?t :arachne.descriptor/tx ?tx]
+            [?tx :arachne.descriptor.tx/provenance ?p]])
+      (first)
+      (get '?p)))
+
+  (clojure.pprint/pprint (d/pull d p '[*]))
+
+  (clojure.pprint/pprint
+    (d/pull d '_76330a9f-6337-4396-9891-2e33bbb3d5f1 '[*])
+    )
+
+  
   (doc/doc d :org.arachne-framework/arachne-doc)
 
   (doc/doc d :org.arachne-framework/arachne-core)
