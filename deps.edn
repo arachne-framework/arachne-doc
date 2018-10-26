@@ -1,9 +1,11 @@
 {:paths ["src" "resources" "doc"]
  :deps {org.clojure/clojure {:mvn/version "1.10.0-alpha4"}
-        org.arachne-framework/arachne-core {:local/root "../arachne-core"}
+        org.arachne-framework/arachne-core {:git/url "https://github.com/arachne-framework/arachne-core.git"
+                                            :sha "ef6f10e20939986292e4630adaef845a6a012d61"}
         org.apache.commons/commons-lang3 {:mvn/version "3.8.1"}}
  :aliases
  {:run-tests {:main-opts ["-m" "arachne.error.test-runner"]}
+  :local {:extra-deps {org.arachne-framework/arachne-core {:local/root "../arachne-core"}}}
   :test {:extra-paths ["test"]
          :extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                  :sha "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}
